@@ -1,3 +1,5 @@
+import dearpygui.dearpygui as dpg
+
 def set_matrix_button_callback1():
     lab = "Matrix1"
     row = dpg.get_value("Input1")
@@ -31,3 +33,28 @@ def set_matrix_button_callback2():
         dpg.set_item_width(lab,column*70+20)
         dpg.set_item_height(lab,row*23+35)
         dpg.add_button(label="Transpose",callback=transpose_button_callback2,user_data=2)
+
+def transpose_button_callback1():
+    #swaps row and column dimensions
+    column = dpg.get_value("Input1")
+    row = dpg.get_value("Input2")
+    dpg.set_value("Input1",row)
+    dpg.set_value("Input2",column)
+    values = []
+    lab = "Matrix1"
+    for i in range(column):
+        for j in range(row):
+            values.append(dpg.get_value(f"M1{i}{j}"))
+    dpg.delete_item(lab)
+    count = 0
+    with dpg.child_window(label="Matrix 1 input", width=200, height =100, tag=lab,parent="Primary Window", before="begM2"):
+        for i in range(row):
+            with dpg.group(horizontal=True):
+                for j in range(column):
+                    #for integer only inputs
+                    #dpg.add_input_int(label="", min_value=0,default_value=values[count], width=80, tag=f"M1{i}{j}",step=0)
+                    dpg.add_input_float(tag=f"M1{i}{j}", min_value=0, default_value=values[count], width=60,label="",step=0)
+                    count = count+1
+        dpg.set_item_width(lab,column*70+20)
+        dpg.set_item_height(lab,row*23+35)
+        dpg.add_button(label="Transpose",callback=transpose_button_callback)
