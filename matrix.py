@@ -15,10 +15,9 @@ def set_matrix_button_callback(sender):
     else:
         row = dpg.get_value("Input3")
         column = dpg.get_value("Input4")
-        with dpg.child_window(label="Matrix 2 input", width=100, height =100, tag=lab,parent="Primary Window"):
+        with dpg.child_window(label="Matrix 2 input", width=100, height =100, tag=lab,parent="Primary Window",before="DPB"):
             create_matrix(row,column,num,lab)
             
-
 def create_matrix(row,column,num,lab):
     for i in range(row):
         with dpg.group(horizontal=True):
@@ -33,6 +32,7 @@ def transpose_button_callback(sender):
     if(dpg.get_item_alias(sender) == "T1"):
         num = 1
     lab = f"Matrix{num}"
+    #row and column are the new transposed row and column values
     if num == 1:
         column = dpg.get_value("Input1")
         row = dpg.get_value("Input2")
@@ -43,18 +43,18 @@ def transpose_button_callback(sender):
         row = dpg.get_value("Input4")
         dpg.set_value("Input3",row)
         dpg.set_value("Input4",column)
-    values = storeValues(column,row,num)
+    values = store_values(column,row,num)
     dpg.delete_item(lab)
     dpg.delete_item(sender)
     if num == 1:
         with dpg.child_window(label="Matrix 1 input", width=100, height =100, tag=lab,parent="Primary Window", before="begM2"):
             transpose_matrix(row,column,num,values,lab)
     else:
-        with dpg.child_window(label="Matrix 2 input", width=100, height =100, tag=lab,parent="Primary Window"):
-            transpose_matrix(row,column,num,values,lab)
-            
+        with dpg.child_window(label="Matrix 2 input", width=100, height =100, tag=lab,parent="Primary Window",before="DPB"):
+            transpose_matrix(row,column,num,values,lab)      
 
-def storeValues(column,row,num):
+#stores the current values in a list and returns the list. Values are stored up to down left to right 
+def store_values(column,row,num):
     values = []
     for i in range(column):
         for j in range(row):
@@ -67,12 +67,37 @@ def transpose_matrix(row,column,num,values,lab):
         with dpg.group(horizontal=True):
             for j in range(column):
                 #for integer only inputs
-                #dpg.add_input_int(label="", min_value=0,default_value=values[count], width=80, tag=f"M1{i}{j}",step=0)
-                dpg.add_input_float(tag=f"M{num}{i}{j}", min_value=0, default_value=values[count], width=60,label="",step=0)
-                count = count+1
+                #dpg.add_input_int(label="", min_value=0,default_value=values[count], width=80, tag=f"M1{j}{i}",step=0)
+                dpg.add_input_float(tag=f"M{num}{i}{j}", min_value=0, default_value=values[count+j*row], width=60,label="",step=0)
+        count=count +1
     dpg.set_item_width(lab,column*70+20)
     dpg.set_item_height(lab,row*23+35)
-    dpg.add_button(label="Transpose",callback=transpose_button_callback,tag=f"T{num}")   
+    dpg.add_button(label="Transpose",callback=transpose_button_callback,tag=f"T{num}")
+
+def dot_product_button():
+    rowA = dpg.get_value("Input1")
+    columnA  = dpg.get_value("Input2")
+    rowB = dpg.get_value("Input3")
+    columnB = dpg.get_value("Input4")
+    if(rowA*columnA*rowB*columnB != 0 and columnA == rowB):
+        values = dot_product()
+        with dpg.child_window(label="Result", width=100, height =100, tag="Result",parent="Primary Window"):
+            create_answer_matrix(rowA,columnB,values)
+
+def dot_product():
+    m1values = store_values(dpg.get_value("Input2"),dpg.get_value("Input1"),1)
+    m2values = store_values(dpg.get_value("Input4"),dpg.get_value("Input3"),2)
+    return
+
+def create_answer_matrix(row,column,value):
+    count = 0
+    if(dpg.does_item_exist("Result")):
+        dpg.delete_item("Result")
+    for i in range(row):
+        with dpg.group(horizontal=True):
+            for j in range(column):
+                dpg.add_input_float(tag=f"M{num}{i}{j}", min_value=0, default_value=value[count], width=60,label="",step=0)
+                count = count+1 
 
 def main():
     dpg.create_context()
@@ -88,10 +113,6 @@ def main():
             dpg.add_input_int(label="Columns", default_value=0,  width=30, tag="Input2", min_value=0,step=0)
         '''
         dpg.add_button(label="Set Matrix 1 Size", callback=set_matrix_button_callback,tag="B1")
-        #with dpg.child_window(label="Matrix 1 input", width=1, height=1, tag="Matrix1"):
-        #    dpg.add_text("test text")
-
-        #matrix 2 sizeList = [row, column] inputs
         dpg.add_text("Matrix 2",tag="begM2")
         dpg.add_input_int(label="Rows", default_value=0, width=80, tag="Input3",min_value=0)
         dpg.add_input_int(label="Columns", default_value=0,  width=80, tag="Input4", min_value=0)
@@ -101,10 +122,11 @@ def main():
             dpg.add_input_int(label="Columns", default_value=0,  width=30, tag="Input4", min_value=0,step=0)
         '''
         dpg.add_button(label="Set Matrix 2 Size", callback=set_matrix_button_callback,tag="B2")
-        #with dpg.child_window(label="Matrix 2 input", width=100, height =100, tag="Matrix2"):
+        
+        dpg.add_button(label="Dot Product", callback=dot_product_button,tag="DPB")
 
-    #sizeList = [row, column] and name of the primary window viewport
-    dpg.create_viewport(title='Matthew\'s Magnificent Matrix Machine', width=600, height=500)
+    #create and name of the primary window viewport
+    dpg.create_viewport(title='Matthew\'s Magnificent Matrix Machine', width=1000, height=800)
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.set_primary_window("Primary Window", True)
