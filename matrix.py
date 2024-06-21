@@ -69,7 +69,7 @@ def transpose_matrix(row,column,num,values,lab):
                 #for integer only inputs
                 #dpg.add_input_int(label="", min_value=0,default_value=values[count], width=80, tag=f"M1{j}{i}",step=0)
                 dpg.add_input_float(tag=f"M{num}{i}{j}", min_value=0, default_value=values[count+j*row], width=60,label="",step=0)
-        count=count +1
+        count=count+1
     dpg.set_item_width(lab,column*70+20)
     dpg.set_item_height(lab,row*23+35)
     dpg.add_button(label="Transpose",callback=transpose_button_callback,tag=f"T{num}")
@@ -79,24 +79,39 @@ def dot_product_button():
     columnA  = dpg.get_value("Input2")
     rowB = dpg.get_value("Input3")
     columnB = dpg.get_value("Input4")
-    if(rowA*columnA*rowB*columnB != 0 and columnA == rowB):
-        values = dot_product()
-        with dpg.child_window(label="Result", width=100, height =100, tag="Result",parent="Primary Window"):
-            create_answer_matrix(rowA,columnB,values)
-
-def dot_product():
-    m1values = store_values(dpg.get_value("Input2"),dpg.get_value("Input1"),1)
-    m2values = store_values(dpg.get_value("Input4"),dpg.get_value("Input3"),2)
-    return
-
-def create_answer_matrix(row,column,value):
-    count = 0
     if(dpg.does_item_exist("Result")):
         dpg.delete_item("Result")
+    if(rowA*columnA*rowB*columnB != 0 and columnA == rowB):
+        values = dot_product(rowA,rowB,columnB)
+        with dpg.child_window(label="Result", width=columnB*70+30, height=rowA*25+35, tag="Result",parent="Primary Window"):
+            dpg.add_text("Multiply")
+            create_answer_matrix(rowA,columnB,values)
+    else:
+        with dpg.child_window(label="Result", width=300, height =35, tag="Result",parent="Primary Window"):
+            dpg.add_text("Matrix dimensions can not be multiplied")
+
+def dot_product(rowA,rowB,columnB):
+    values = []
+    rowA_count = 0
+    while rowA_count < rowA:
+        columnB_count = 0
+        while columnB_count < columnB:
+            iterator = 0
+            sum = 0
+            while iterator < rowB:
+                sum = sum + (dpg.get_value(f"M1{rowA_count}{iterator}") * dpg.get_value(f"M2{iterator}{columnB_count}"))
+                iterator = iterator+1
+            columnB_count = columnB_count+1
+            values.append(sum)
+        rowA_count = rowA_count+1
+    return values
+
+def create_answer_matrix(row,column,values):
+    count = 0
     for i in range(row):
         with dpg.group(horizontal=True):
             for j in range(column):
-                dpg.add_input_float(tag=f"M{num}{i}{j}", min_value=0, default_value=value[count], width=60,label="",step=0)
+                dpg.add_input_float(tag=f"DP{i}{j}", min_value=0, default_value=values[count], width=60,label="",step=0)
                 count = count+1 
 
 def main():
@@ -123,7 +138,7 @@ def main():
         '''
         dpg.add_button(label="Set Matrix 2 Size", callback=set_matrix_button_callback,tag="B2")
         
-        dpg.add_button(label="Dot Product", callback=dot_product_button,tag="DPB")
+        dpg.add_button(label="Multiply", callback=dot_product_button,tag="DPB")
 
     #create and name of the primary window viewport
     dpg.create_viewport(title='Matthew\'s Magnificent Matrix Machine', width=1000, height=800)
