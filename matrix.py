@@ -106,11 +106,11 @@ def dot_product(rowA,rowB,columnB):
             iterator = 0
             sum = 0
             while iterator < rowB:
-                sum = sum + (dpg.get_value(f"M1{rowA_count}{iterator}") * dpg.get_value(f"M2{iterator}{columnB_count}"))
-                iterator = iterator+1
-            columnB_count = columnB_count+1
+                sum += dpg.get_value(f"M1{rowA_count}{iterator}") * dpg.get_value(f"M2{iterator}{columnB_count}")
+                iterator += 1
+            columnB_count += 1
             values.append(sum)
-        rowA_count = rowA_count+1
+        rowA_count += 1
     return values
 
 #returns and displays the results of matrix multiplication
@@ -120,15 +120,57 @@ def create_answer_matrix(row,column,values):
         with dpg.group(horizontal=True):
             for j in range(column):
                 dpg.add_input_float(tag=f"DP{i}{j}", min_value=0, default_value=values[count], width=60,label="",step=0)
-                count = count+1 
+                count += 1 
+
+def get_sub_det_matrix(x, parsed_list: list, row):
+    submatrix= []
+    num_elements = row*(row+1)
+    for count in range(num_elements):
+        if count % (row+1) != x:
+            submatrix.append(parsed_list[count])
+    return submatrix
 
 #calculates determinatant for 2x2 matrix
-def det_two(values: list):
-    if(len(values) == 4): 
-        return values[0]*values[3] - values[1]*values[2]
-    else:
-        print()
+def det_two(values: list): 
+    return values[0]*values[3] - values[1]*values[2]
 
+#recursive calculation of determinant
+def recursive_det(multipliers: list, parsed_list: list, row):
+    determinant = 0
+    for x in range(len(multipliers)):
+        if row > 2:
+            submatrix = get_sub_det_matrix(x,parsed_list,row)
+            determinant += multipliers[x]*calc_det(submatrix,row)
+        else:
+            submatrix = get_sub_det_matrix(x,parsed_list,row)
+            determinant += multipliers[x]*det_two(submatrix)
+    return determinant
+
+#organizes the matrices for the recursive calculation of determinant
+def calc_det(values: list, row):
+    determinant = row*row
+    row -= 1
+    if row == 0:
+        determinant = values[0]
+    elif row == 1:
+        determinant = det_two(values)
+    else:
+        multipliers = []
+        parsed_list = []
+        count = 0
+        for x in range(row+1):
+            val = values[x]
+            if count % 2 == 1:
+                multipliers.append(-val)
+            else:
+                multipliers.append(val)
+            count += 1
+        while count < determinant:
+            parsed_list.append(values[count])
+            count += 1
+        determinant = recursive_det(multipliers, parsed_list, row)
+    return determinant
+    
 #determinate to calculate determinate of square matrices
 def det_button_callback(sender):
     num = 2
@@ -145,8 +187,8 @@ def det_button_callback(sender):
     dpg.delete_item(f"DetVal{num}")
     if row == column:
         values = store_values(row,column,num)
-        determinate = det_two(values)
-        dpg.add_text(f"Determinant: {determinate}",parent=f"Matrix{num}",tag=f"DetVal{num}")
+        determinant = calc_det(values,row)
+        dpg.add_text(f"Determinant: {determinant}",parent=f"Matrix{num}",tag=f"DetVal{num}")
     else:
         dpg.add_text("Matrix must be square",parent=f"Matrix{num}",tag=f"DetVal{num}")
 
@@ -177,7 +219,7 @@ def main():
         dpg.add_button(label="Multiply", callback=dot_product_button,tag="DPB")
 
     #create and name of the primary window viewport
-    dpg.create_viewport(title='Matthew\'s Magnificent Matrix Machine', width=1000, height=800)
+    dpg.create_viewport(title='Matrix Calculator by Matthew', width=1000, height=800)
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.set_primary_window("Primary Window", True)
